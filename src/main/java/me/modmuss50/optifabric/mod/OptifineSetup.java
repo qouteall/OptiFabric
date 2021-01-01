@@ -182,13 +182,29 @@ public class OptifineSetup {
 
 	//Gets the minecraft librarys
 	private static List<Path> getLibs() {
-		return FabricLauncherBase.getLauncher().getLoadTimeDependencies().stream().map(url -> {
-			try {
-				return UrlUtil.asPath(url);
-			} catch (UrlConversionException e) {
-				throw new RuntimeException(e);
-			}
-		}).filter(Files::exists).collect(Collectors.toList());
+        List<Path> result = FabricLauncherBase.getLauncher().getLoadTimeDependencies().stream().map(url -> {
+            try {
+                return UrlUtil.asPath(url);
+            }
+            catch (UrlConversionException e) {
+                throw new RuntimeException(e);
+            }
+        })
+            .filter(Files::exists)
+            .filter(file -> {
+				String str = file.getFileName().toString();
+				boolean isProjectMappedMCJar =
+                    str.contains("projectmapped") || str.contains("mapped-net.fabricmc");
+                if (isProjectMappedMCJar) {
+                    System.out.println("Skipping jar in classpath " + file);
+                }
+                return !isProjectMappedMCJar;
+            })
+            .collect(Collectors.toList());
+        
+//        result.forEach(System.out::println);
+        
+        return result;
 	}
 
 	//Gets the offical minecraft jar

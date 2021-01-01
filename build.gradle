@@ -57,73 +57,73 @@ dependencies {
 	modImplementation "com.github.Chocohead:Fabric-ASM:${project.fabric_asm_version}"
 	include "com.github.Chocohead:Fabric-ASM:${project.fabric_asm_version}"
 
-	modRuntime("me.shedaniel:RoughlyEnoughItems:5.4.2") {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime("RebornCore:RebornCore-1.16:4.4.1+build.69") {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime("TechReborn:TechReborn-1.16:3.5.3+build.115") {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-		exclude(group: "RebornCore") //TR depends purely on the newest version
-	}
-	modRuntime("com.jamieswhiteshirt:clothesline-fabric:0.2.1+1.16.2") {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime 'curse.maven:trumpet-skeleton-fabric-330417:3033242'
-	modRuntime ("vazkii.patchouli:Patchouli:1.16-40-FABRIC") {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime 'curse.maven:malilib-303119:3113699'
-	modRuntime 'curse.maven:watson-361509:3130935'
-	modRuntime 'net.earthcomputer:multiconnect:1.3.19:api'
-	modRuntime 'net.earthcomputer:multiconnect:1.3.19:slim'
-	modRuntime 'curse.maven:now-playing-398652:3041887'
-	modRuntime ('com.github.apace100:origins-fabric:0.4.1') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime 'curse.maven:staff-of-building-382694:3060240'
-	modRuntime ('me.shedaniel.cloth.api:cloth-dynamic-registry-api-v1:1.2.1') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime 'curse.maven:sandwichable-374143:3039866'
-	modRuntime ('appeng:appliedenergistics2-fabric:8.1.0-alpha.9') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime ('net.fabricmc:fabric-language-kotlin:1.4.0+build.1') {
-		exclude(group: "net.fabricmc")
-	}
-	modRuntime ('net.dblsaiko:hctm-base:3.3.0') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime ('com.github.DawnTeamMC:DawnAPI:1.4.1') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime ('com.github.DawnTeamMC:Mubble:0ccbea2') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime ('com.github.user11681:smartentrypoints:2ae077c') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime ('com.github.user11681:phormat:77f017e') {
-		exclude(group: "net.fabricmc")
-		exclude(group: "net.fabricmc.fabric-api")
-	}
-	modRuntime 'curse.maven:chat-heads-407206:3114278'
-	modRuntime 'curse.maven:trinkets-fabric-341284:3100959'
-	modRuntime 'curse.maven:images-400123:3118882'
+//	modRuntime("me.shedaniel:RoughlyEnoughItems:5.4.2") {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime("RebornCore:RebornCore-1.16:4.4.1+build.69") {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime("TechReborn:TechReborn-1.16:3.5.3+build.115") {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//		exclude(group: "RebornCore") //TR depends purely on the newest version
+//	}
+//	modRuntime("com.jamieswhiteshirt:clothesline-fabric:0.2.1+1.16.2") {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime 'curse.maven:trumpet-skeleton-fabric-330417:3033242'
+//	modRuntime ("vazkii.patchouli:Patchouli:1.16-40-FABRIC") {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime 'curse.maven:malilib-303119:3113699'
+//	modRuntime 'curse.maven:watson-361509:3130935'
+//	modRuntime 'net.earthcomputer:multiconnect:1.3.19:api'
+//	modRuntime 'net.earthcomputer:multiconnect:1.3.19:slim'
+//	modRuntime 'curse.maven:now-playing-398652:3041887'
+//	modRuntime ('com.github.apace100:origins-fabric:0.4.1') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime 'curse.maven:staff-of-building-382694:3060240'
+//	modRuntime ('me.shedaniel.cloth.api:cloth-dynamic-registry-api-v1:1.2.1') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime 'curse.maven:sandwichable-374143:3039866'
+//	modRuntime ('appeng:appliedenergistics2-fabric:8.1.0-alpha.9') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime ('net.fabricmc:fabric-language-kotlin:1.4.0+build.1') {
+//		exclude(group: "net.fabricmc")
+//	}
+//	modRuntime ('net.dblsaiko:hctm-base:3.3.0') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime ('com.github.DawnTeamMC:DawnAPI:1.4.1') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime ('com.github.DawnTeamMC:Mubble:0ccbea2') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime ('com.github.user11681:smartentrypoints:2ae077c') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime ('com.github.user11681:phormat:77f017e') {
+//		exclude(group: "net.fabricmc")
+//		exclude(group: "net.fabricmc.fabric-api")
+//	}
+//	modRuntime 'curse.maven:chat-heads-407206:3114278'
+//	modRuntime 'curse.maven:trinkets-fabric-341284:3100959'
+//	modRuntime 'curse.maven:images-400123:3118882'
 }
 
 compileJava {
