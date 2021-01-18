@@ -2,6 +2,7 @@ package me.modmuss50.optifabric.mod;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,7 @@ import com.google.common.base.MoreObjects;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import org.spongepowered.asm.mixin.Mixins;
@@ -49,12 +51,54 @@ public class OptifabricSetup implements Runnable {
 			throw new RuntimeException("Failed to setup optifine", e);
 		}
 
+		BooleanSupplier particlesPresent = new BooleanSupplier() {
+			private boolean haveLooked, isPresent;
+
+			@Override
+			public boolean getAsBoolean() {
+				if (!haveLooked) {
+					isPresent = injector.predictFuture(RemappingUtils.getClassName("class_702")).filter(node -> {//ParticleManager
+						//(MatrixStack, VertexConsumerProvider$Immediate, LightmapTextureManager, Camera, Frustum)
+						String desc = RemappingUtils.mapMethodDescriptor("(Lnet/minecraft/class_4587;Lnet/minecraft/class_4597$class_4598;"
+																		+ "Lnet/minecraft/class_765;Lnet/minecraft/class_4184;FLnet/minecraft/class_4604;)V");
+
+						for (MethodNode method : node.methods) {
+							if ("renderParticles".equals(method.name) && desc.equals(method.desc)) {
+								return true;
+							}
+						}
+
+						return false;
+					}).isPresent();
+					haveLooked = true;
+				}
+
+				return isPresent;
+			}
+		};
+
 		if (isPresent("fabric-renderer-api-v1")) {
 			Mixins.addConfiguration("optifabric.compat.fabric-renderer-api.mixins.json");
 		}
 
+		if (isPresent("fabric-rendering-v1", ">=1.5.0") && particlesPresent.getAsBoolean()) {
+			Mixins.addConfiguration("optifabric.compat.fabric-rendering.mixins.json");
+		}
+
 		if (isPresent("fabric-renderer-indigo")) {
 			Mixins.addConfiguration("optifabric.compat.indigo.mixins.json");
+
+			injector.predictFuture(RemappingUtils.getClassName("class_846$class_849")).ifPresent(node -> {//ChunkBuilder$ChunkData
+				String nonEmptyLayers = RemappingUtils.mapFieldName("class_846$class_849", "field_4450", "Ljava/util/Set;");
+
+				for (FieldNode field : node.fields) {
+					if (nonEmptyLayers.equals(field.name) && "Ljava/util/Set;".equals(field.desc)) {
+						return;
+					}
+				}
+
+				Mixins.addConfiguration("optifabric.compat.indigo.extra-mixins.json");
+			});
 		}
 
 		if (isPresent("fabric-item-api-v1", ">=1.1.0")) {
@@ -115,18 +159,9 @@ public class OptifabricSetup implements Runnable {
 		if (isPresent("carpet")) {
 			Mixins.addConfiguration("optifabric.compat.carpet.mixins.json");
 
-			injector.predictFuture(RemappingUtils.getClassName("class_702")).ifPresent(node -> {//ParticleManager
-				//(MatrixStack, VertexConsumerProvider$Immediate, LightmapTextureManager, Camera, Frustum)
-				String desc = RemappingUtils.mapMethodDescriptor("(Lnet/minecraft/class_4587;Lnet/minecraft/class_4597$class_4598;"
-																+ "Lnet/minecraft/class_765;Lnet/minecraft/class_4184;FLnet/minecraft/class_4604;)V");
-
-				for (MethodNode method : node.methods) {
-					if ("renderParticles".equals(method.name) && desc.equals(method.desc)) {
-						Mixins.addConfiguration("optifabric.compat.carpet.extra-mixins.json");
-						break;
-					}
-				}
-			});
+			if (particlesPresent.getAsBoolean()) {
+				Mixins.addConfiguration("optifabric.compat.carpet.extra-mixins.json");
+			}
 		}
 
 		if (isPresent("hctm-base")) {

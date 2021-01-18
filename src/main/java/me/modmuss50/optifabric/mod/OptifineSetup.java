@@ -2,7 +2,6 @@ package me.modmuss50.optifabric.mod;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,24 +24,26 @@ import net.fabricmc.loader.util.UrlUtil;
 import net.fabricmc.loader.util.mappings.TinyRemapperMappingsHelper;
 import net.fabricmc.mapping.tree.ClassDef;
 import net.fabricmc.mapping.tree.TinyTree;
+
 import net.fabricmc.tinyremapper.IMappingProvider;
+import net.fabricmc.tinyremapper.OutputConsumerPath;
+import net.fabricmc.tinyremapper.TinyRemapper;
 import net.fabricmc.tinyremapper.IMappingProvider.Member;
+import net.fabricmc.tinyremapper.OutputConsumerPath.Builder;
 
 import me.modmuss50.optifabric.patcher.ClassCache;
 import me.modmuss50.optifabric.patcher.LambdaRebuiler;
 import me.modmuss50.optifabric.patcher.PatchSplitter;
-import me.modmuss50.optifabric.patcher.RemapUtils;
 import me.modmuss50.optifabric.util.ZipUtils;
 
 public class OptifineSetup {
 	public static Pair<File, ClassCache> getRuntime() throws IOException {
 		File workingDir = new File(FabricLoader.getInstance().getGameDirectory(), ".optifine");
-
 		if (!workingDir.exists()) {
 			workingDir.mkdirs();
 		}
-		File optifineModJar = OptifineVersion.findOptifineJar();
 
+		File optifineModJar = OptifineVersion.findOptifineJar();
 		byte[] modHash = fileHash(optifineModJar);
 
 		File versionDir = new File(workingDir, OptifineVersion.version);
@@ -69,10 +70,12 @@ public class OptifineSetup {
 			return Pair.of(remappedJar, classCache);
 		}
 
+		Path minecraftJar = getMinecraftJar();
+
 		if (OptifineVersion.jarType == OptifineVersion.JarType.OPTIFINE_INSTALLER) {
 			File optifineMod = new File(versionDir, "/Optifine-mod.jar");
 			if (!optifineMod.exists()) {
-				OptifineInstaller.extract(optifineModJar, optifineMod, getMinecraftJar().toFile());
+				OptifineInstaller.extract(optifineModJar, optifineMod, minecraftJar.toFile());
 			}
 			optifineModJar = optifineMod;
 		}
@@ -101,21 +104,24 @@ public class OptifineSetup {
 			return !(name.startsWith("srg/") || name.startsWith("net/minecraft/"));
 		}, jarOfTheFree);
 
-		System.out.println("Building lambada fix mappings");
-		LambdaRebuiler rebuiler = new LambdaRebuiler(jarOfTheFree, getMinecraftJar().toFile());
-		rebuiler.buildLambadaMap();
+		System.out.println("Finding lambdas to fix");
+		LambdaRebuiler rebuilder = new LambdaRebuiler(jarOfTheFree, minecraftJar.toFile());
+		rebuilder.buildLambdaMap();
 
-		System.out.println("Remapping optifine with fixed lambada names");
-		File lambadaFixJar = new File(versionDir, "/Optifine-lambadafix.jar");
-		RemapUtils.mapJar(lambadaFixJar.toPath(), jarOfTheFree.toPath(), rebuiler, getLibs());
+		System.out.println("Remapping optifine with fixed lambda names");
+		File lambdaFixJar = new File(versionDir, "/Optifine-lambdafix.jar");
+		Path[] libraries = getLibs(minecraftJar);
+		remapOptifine(jarOfTheFree, libraries, lambdaFixJar, rebuilder);
 
-		remapOptifine(lambadaFixJar.toPath(), remappedJar);
+		String namespace = FabricLoader.getInstance().getMappingResolver().getCurrentRuntimeNamespace();
+		System.out.println("Remapping optifine from official to " + namespace);
+		remapOptifine(lambdaFixJar, libraries, remappedJar, createMappings("official", namespace));
 
 		classCache = PatchSplitter.generateClassCache(remappedJar, optifinePatches, modHash);
 
 		if(true){
 			//We are done, lets get rid of the stuff we no longer need
-			lambadaFixJar.delete();
+			lambdaFixJar.delete();
 			jarOfTheFree.delete();
 
 			if(OptifineVersion.jarType == OptifineVersion.JarType.OPTIFINE_INSTALLER){
@@ -136,14 +142,26 @@ public class OptifineSetup {
 		return Pair.of(remappedJar, classCache);
 	}
 
-	private static void remapOptifine(Path input, File remappedJar) throws IOException {
-		String namespace = FabricLoader.getInstance().getMappingResolver().getCurrentRuntimeNamespace();
-		System.out.println("Remapping optifine to :" + namespace);
+	private static void remapOptifine(File input, Path[] libraries, File output, IMappingProvider mappings) throws IOException {
+		remapOptifine(input.toPath(), libraries, output.toPath(), mappings);
+	}
 
-		List<Path> mcLibs = getLibs();
-		mcLibs.add(getMinecraftJar());
+	private static void remapOptifine(Path input, Path[] libraries, Path output, IMappingProvider mappings) throws IOException {
+		Files.deleteIfExists(output);
 
-		RemapUtils.mapJar(remappedJar.toPath(), input, createMappings("official", namespace), mcLibs);
+		TinyRemapper remapper = TinyRemapper.newRemapper().withMappings(mappings).renameInvalidLocals(FabricLoader.getInstance().isDevelopmentEnvironment()).rebuildSourceFilenames(true).build();
+
+		try (OutputConsumerPath outputConsumer = new Builder(output).build()) {
+			outputConsumer.addNonClassFiles(input);
+			remapper.readInputs(input);
+			remapper.readClassPath(libraries);
+
+			remapper.apply(outputConsumer);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to remap jar", e);
+		} finally {
+			remapper.finish();
+		}
 	}
 
 	//Optifine currently has two fields that match the same name as Yarn mappings, we'll rename Optifine's to something else
@@ -181,38 +199,48 @@ public class OptifineSetup {
 	}
 
 	//Gets the minecraft librarys
-	private static List<Path> getLibs() {
-        List<Path> result = FabricLauncherBase.getLauncher().getLoadTimeDependencies().stream().map(url -> {
-            try {
-                return UrlUtil.asPath(url);
-            }
-            catch (UrlConversionException e) {
-                throw new RuntimeException(e);
-            }
-        })
-            .filter(Files::exists)
-            .filter(file -> {
-				String str = file.getFileName().toString();
-				boolean isProjectMappedMCJar =
-                    str.contains("projectmapped") || str.contains("mapped-net.fabricmc");
-                if (isProjectMappedMCJar) {
-                    System.out.println("Skipping jar in classpath " + file);
-                }
-                return !isProjectMappedMCJar;
-            })
-            .collect(Collectors.toList());
-        
-//        result.forEach(System.out::println);
-        
-        return result;
+	private static Path[] getLibs(Path minecraftJar) {
+		Path[] libs = FabricLauncherBase.getLauncher().getLoadTimeDependencies().stream().map(url -> {
+			try {
+				return UrlUtil.asPath(url);
+			} catch (UrlConversionException e) {
+				throw new RuntimeException(e);
+			}
+		}).filter(Files::exists).toArray(Path[]::new);
+
+		out: if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
+			Path launchJar = getLaunchMinecraftJar();
+
+			for (int i = 0, end = libs.length; i < end; i++) {
+				Path lib = libs[i];
+
+				if (launchJar.equals(lib)) {
+					libs[i] = minecraftJar;
+					break out;
+				}
+			}
+
+			//Can't find the launch jar apparently, remapping will go wrong if it is left in
+			throw new IllegalStateException("Unable to find Minecraft jar (at " + launchJar + ") in classpath: " + Arrays.toString(libs));
+		}
+
+		return libs;
 	}
 
 	//Gets the offical minecraft jar
-	private static Path getMinecraftJar() throws FileNotFoundException {
-		List<Path> contextJars = ((net.fabricmc.loader.FabricLoader) FabricLoader.getInstance()).getGameProvider().getGameContextJars();
+	private static Path getMinecraftJar() {
+		String givenJar = System.getProperty("optifabric.mc-jar");
+		if (givenJar != null) {
+			File givenJarFile = new File(givenJar);
 
-		if (contextJars.isEmpty()) throw new IllegalStateException("Start has no context?");
-		Path minecraftJar = contextJars.get(0);
+			if (givenJarFile.exists()) {
+				return givenJarFile.toPath();
+			} else {
+				System.err.println("Supplied Minecraft jar at " + givenJar + " doesn't exist, falling back");
+			}
+		}
+
+		Path minecraftJar = getLaunchMinecraftJar();
 
 		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
 			Path officialNames = minecraftJar.resolveSibling(String.format("minecraft-%s-client.jar", OptifineVersion.minecraftVersion));
@@ -231,6 +259,12 @@ public class OptifineSetup {
 		}
 
 		return minecraftJar;
+	}
+
+	private static Path getLaunchMinecraftJar() {
+		List<Path> contextJars = ((net.fabricmc.loader.FabricLoader) FabricLoader.getInstance()).getGameProvider().getGameContextJars();
+		if (contextJars.isEmpty()) throw new IllegalStateException("Start has no context?");
+		return contextJars.get(0);
 	}
 
 	private static byte[] fileHash(File input) throws IOException {

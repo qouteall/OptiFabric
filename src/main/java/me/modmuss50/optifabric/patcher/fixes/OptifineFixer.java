@@ -21,7 +21,10 @@ public class OptifineFixer {
 	private final Set<String> skippedClass = new HashSet<>();
 
 	private OptifineFixer() {
-		//net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk
+		//net/minecraft/client/render/chunk/ChunkBuilder$ChunkData
+		registerFix("class_846$class_849", new ChunkDataFix());
+
+		//net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask
 		registerFix("class_846$class_851$class_4578", new ChunkRendererFix());
 
 		//net/minecraft/client/render/block/BlockModelRenderer$AmbientOcclusionCalculator

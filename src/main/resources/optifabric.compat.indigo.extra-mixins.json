@@ -1,0 +1,8 @@
+{
+	"parent": "optifabric.compat.indigo.mixins.json",
+	"package": "me.modmuss50.optifabric.compat.indigo.mixin",
+	"plugin": "me.modmuss50.optifabric.compat.InterceptingMixinPlugin",
+	"mixins": [
+		"ChunkDataMixin"
+	]
+}

@@ -43,7 +43,7 @@ public class LambdaRebuiler implements IMappingProvider {
 		this.minecraftClientFile = minecraftClientFile;
 	}
 
-	public void buildLambadaMap() throws IOException {
+	public void buildLambdaMap() throws IOException {
 		try (JarFile optifineJar = new JarFile(optifineFile); JarFile clientJar = new JarFile(minecraftClientFile)) {
 			Enumeration<JarEntry> entrys = optifineJar.entries();
 

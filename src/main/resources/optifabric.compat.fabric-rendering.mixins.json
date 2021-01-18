@@ -1,0 +1,8 @@
+{
+	"parent": "optifabric.mixins.json",
+	"package": "me.modmuss50.optifabric.compat.fabricrendering.mixin",
+	"plugin": "me.modmuss50.optifabric.compat.fabricrendering.RenderingMixinPlugin",
+	"mixins": [
+		"WorldRendererMixin"
+	]
+}
